@@ -114,3 +114,29 @@ The app reads configuration with `python-decouple`.
 | `SECRET_KEY` | `django-insecure-change-me` | Required |
 | `DEBUG` | `True` | `True` for local development |
 | `ALLOWED_HOSTS` | `localhost,127.0.0.1` | Comma-separated host list |
+| `DATABASE_URL` | `sqlite:///db.sqlite3` | Use PostgreSQL in production |
+| `CORS_ALLOWED_ORIGINS` | `http://localhost:5173` | Comma-separated frontend origins |
+| `CSRF_TRUSTED_ORIGINS` | `http://localhost:5173` | Needed for trusted frontend domains |
+
+## Production Deployment
+
+This backend is now prepared for deployment on platforms like Render.
+
+Production entrypoints:
+
+```bash
+./build.sh
+gunicorn config.wsgi:application
+```
+
+Recommended production variables:
+
+```bash
+DJANGO_SETTINGS_MODULE=config.settings.prod
+DATABASE_URL=postgresql://...
+ALLOWED_HOSTS=your-backend-domain.onrender.com
+CORS_ALLOWED_ORIGINS=https://your-frontend-domain.vercel.app
+CSRF_TRUSTED_ORIGINS=https://your-frontend-domain.vercel.app
+```
+
+See [`DEPLOYMENT.md`](../DEPLOYMENT.md) for the full frontend + backend flow.
