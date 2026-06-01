@@ -4,11 +4,17 @@ services:
     env: python
     buildCommand: ./build.sh
     startCommand: gunicorn config.wsgi:application
+    disk:
+      name: portfolio-media
+      mountPath: /opt/render/project/src/media
+      sizeGB: 1
     envVars:
       - key: PYTHON_VERSION
         value: 3.12.3
       - key: DJANGO_SETTINGS_MODULE
         value: config.settings.prod
+      - key: MEDIA_ROOT
+        value: /opt/render/project/src/media
       - key: SECRET_KEY
         generateValue: true
       - key: DATABASE_URL
