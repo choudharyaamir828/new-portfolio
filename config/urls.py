@@ -4,12 +4,15 @@ from django.conf.urls.static import static
 from django.urls import include, path
 from django.views.static import serve
 
+from apps.core.views import HealthCheckView
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path(
         "api/v1/",
         include(
             [
+                path("health/", HealthCheckView.as_view(), name="health"),
                 path("about/", include("apps.about.urls")),
                 path("projects/", include("apps.projects.urls")),
                 path("skills/", include("apps.skills.urls")),

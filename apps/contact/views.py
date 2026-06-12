@@ -1,18 +1,47 @@
+import logging
+import threading
+
 from django.conf import settings
 from django.core.mail import send_mail
+from django.utils import timezone
 from rest_framework.generics import CreateAPIView
-from rest_framework.exceptions import APIException, ValidationError
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny
+from rest_framework.throttling import ScopedRateThrottle
 
 from apps.about.models import Profile
 from apps.contact.models import ContactMessage
 from apps.contact.serializers import ContactMessageSerializer
+
+logger = logging.getLogger(__name__)
+
+
+def _send_contact_email(message_id, subject, body, recipient_email):
+    """Deliver the notification email in a background thread so the
+    HTTP request never blocks on (or fails because of) SMTP."""
+    try:
+        send_mail(
+            subject=subject,
+            message=body,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[recipient_email],
+            fail_silently=False,
+        )
+    except Exception:
+        logger.exception("Contact email delivery failed for message %s", message_id)
+        return
+
+    ContactMessage.objects.filter(pk=message_id).update(
+        email_sent=True, updated_at=timezone.now()
+    )
 
 
 class ContactMessageCreateView(CreateAPIView):
     queryset = ContactMessage.objects.all()
     serializer_class = ContactMessageSerializer
     permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "contact"
     http_method_names = ["post", "options"]
 
     def perform_create(self, serializer):
@@ -58,16 +87,8 @@ class ContactMessageCreateView(CreateAPIView):
             ]
         )
 
-        try:
-            send_mail(
-                subject=subject,
-                message=body,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[recipient_email],
-                fail_silently=False,
-            )
-        except Exception as exc:
-            raise APIException("Message saved, but email delivery failed.") from exc
-
-        message.email_sent = True
-        message.save(update_fields=["email_sent", "updated_at"])
+        threading.Thread(
+            target=_send_contact_email,
+            args=(message.pk, subject, body, recipient_email),
+            daemon=True,
+        ).start()
