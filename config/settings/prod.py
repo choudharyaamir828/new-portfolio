@@ -11,6 +11,10 @@ for setting_name in dir(base_settings):
 SECRET_KEY = config("SECRET_KEY")
 DEBUG = False
 
+render_hostname = config("RENDER_EXTERNAL_HOSTNAME", default="")
+if render_hostname and render_hostname not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS = [*ALLOWED_HOSTS, render_hostname]
+
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
