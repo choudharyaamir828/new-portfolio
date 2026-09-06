@@ -114,7 +114,7 @@ The app reads configuration with `python-decouple`.
 | `SECRET_KEY` | `django-insecure-change-me` | Required |
 | `DEBUG` | `True` | `True` for local development |
 | `ALLOWED_HOSTS` | `localhost,127.0.0.1` | Comma-separated host list |
-| `SQLITE_DB_PATH` | `/var/data/db.sqlite3` | Optional; defaults to project `db.sqlite3` |
+| `SQLITE_DB_PATH` | `/opt/render/project/src/db.sqlite3` | Optional; defaults to project `db.sqlite3` |
 | `CORS_ALLOWED_ORIGINS` | `http://localhost:5173` | Comma-separated frontend origins |
 | `CSRF_TRUSTED_ORIGINS` | `http://localhost:5173` | Needed for trusted frontend domains |
 
@@ -133,7 +133,7 @@ Recommended production variables:
 
 ```bash
 DJANGO_SETTINGS_MODULE=config.settings.prod
-SQLITE_DB_PATH=/var/data/db.sqlite3
+SQLITE_DB_PATH=/opt/render/project/src/db.sqlite3
 ALLOWED_HOSTS=your-backend-domain.onrender.com
 CORS_ALLOWED_ORIGINS=https://your-frontend-domain.vercel.app
 CSRF_TRUSTED_ORIGINS=https://your-frontend-domain.vercel.app
@@ -141,4 +141,16 @@ CSRF_TRUSTED_ORIGINS=https://your-frontend-domain.vercel.app
 
 See [`DEPLOYMENT.md`](../DEPLOYMENT.md) for the full frontend + backend flow.
 
-SQLite data on Render must live on a persistent disk to survive restarts and redeploys. The blueprint describes a new disk at `/var/data`, with media in `/var/data/media`. Do not apply this disk change to an existing service before backing up and copying its current database and uploads. The start script applies migrations at runtime because persistent disks are unavailable during builds. Existing data is not copied automatically.
+## Free Render deployment (SQLite)
+
+Use the Free instance type, build command `./build.sh`, and start command `bash start.sh`.
+The blueprint explicitly selects `plan: free` and creates no paid disk or PostgreSQL database.
+SQLite defaults to the existing project `db.sqlite3`; `DATABASE_URL` is ignored.
+Set CORS_ALLOWED_ORIGINS and CSRF_TRUSTED_ORIGINS to the actual Vercel origin.
+
+Render Free loses runtime SQLite changes and uploads on restart, redeploy, or idle spin-down.
+Only content included in the deployed repository is restored on the next deployment.
+Do not overwrite or delete existing databases, disks, or services when configuring this setup.
+Free services do not provide dashboard shell access, and SMTP ports 25/465/587 are blocked.
+The contact form can save messages while the instance runs; SMTP notifications need a different delivery setup.
+See https://render.com/docs/free for current limits.
