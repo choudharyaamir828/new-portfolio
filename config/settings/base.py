@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import dj_database_url
 from decouple import Csv, config
 
 
@@ -84,6 +85,19 @@ DATABASES = {
         "OPTIONS": {"timeout": 20},
     },
 }
+
+database_url = config("DATABASE_URL", default="").strip()
+if database_url:
+    DATABASES["default"] = dj_database_url.parse(
+        database_url,
+        conn_max_age=60,
+        conn_health_checks=True,
+    )
+    if DATABASES["default"]["ENGINE"] == "django.db.backends.postgresql":
+        DATABASES["default"].setdefault("OPTIONS", {}).update(
+            sslmode="require", connect_timeout=10, prepare_threshold=None,
+        )
+        DATABASES["default"]["DISABLE_SERVER_SIDE_CURSORS"] = True
 
 AUTH_PASSWORD_VALIDATORS = [
     {

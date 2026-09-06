@@ -10,7 +10,7 @@ A lightweight, production-minded Django REST Framework API for managing and serv
 - django-filter
 - Pillow
 - python-decouple
-- SQLite for local development and production
+- SQLite locally; Supabase PostgreSQL for deployment
 
 ## Setup
 
@@ -107,7 +107,7 @@ The public API is read-only except for contact submissions. Contact messages are
 
 ## Environment Variables
 
-The app reads configuration with `python-decouple`.
+The app reads configuration with `python-decouple`. Set DATABASE_URL to use Supabase PostgreSQL; leaving it empty keeps local SQLite.
 
 | Key | Example | Notes |
 |---|---|---|
@@ -133,7 +133,7 @@ Recommended production variables:
 
 ```bash
 DJANGO_SETTINGS_MODULE=config.settings.prod
-SQLITE_DB_PATH=/opt/render/project/src/db.sqlite3
+DATABASE_URL=<Supabase Session pooler URI>
 ALLOWED_HOSTS=your-backend-domain.onrender.com
 CORS_ALLOWED_ORIGINS=https://your-frontend-domain.vercel.app
 CSRF_TRUSTED_ORIGINS=https://your-frontend-domain.vercel.app
@@ -141,16 +141,17 @@ CSRF_TRUSTED_ORIGINS=https://your-frontend-domain.vercel.app
 
 See [`DEPLOYMENT.md`](../DEPLOYMENT.md) for the full frontend + backend flow.
 
-## Free Render deployment (SQLite)
+## Free Render + Supabase deployment
 
-Use the Free instance type, build command `./build.sh`, and start command `bash start.sh`.
-The blueprint explicitly selects `plan: free` and creates no paid disk or PostgreSQL database.
-SQLite defaults to the existing project `db.sqlite3`; `DATABASE_URL` is ignored.
-Set CORS_ALLOWED_ORIGINS and CSRF_TRUSTED_ORIGINS to the actual Vercel origin.
+Use Render Free with `./build.sh` as the build command and `bash start.sh` as the start command.
+Set DATABASE_URL in Render to the Supabase Connect > Session pooler connection URI (port 5432).
+Replace the password placeholder with the database password; URL-encode special characters.
+Never put this URI in frontend VITE variables, GitHub, or chat. The Supabase HTTPS project URL is not a database connection URI.
+The application requires TLS for PostgreSQL connections. Leaving DATABASE_URL empty uses local SQLite.
 
-Render Free loses runtime SQLite changes and uploads on restart, redeploy, or idle spin-down.
-Only content included in the deployed repository is restored on the next deployment.
-Do not overwrite or delete existing databases, disks, or services when configuring this setup.
-Free services do not provide dashboard shell access, and SMTP ports 25/465/587 are blocked.
-The contact form can save messages while the instance runs; SMTP notifications need a different delivery setup.
-See https://render.com/docs/free for current limits.
+The start script runs Django migrations to create tables. Existing SQLite portfolio data and admin accounts
+are not transferred automatically; preserve the source database and import its data separately.
+Database records in Supabase survive Render restarts. Uploaded files still need external storage;
+local Render uploads remain ephemeral. No paid Render disk or Render PostgreSQL instance is created.
+Free Render blocks SMTP ports 25/465/587; the current Gmail SMTP delivery needs a different setup.
+See https://supabase.com/docs/guides/database/connecting-to-postgres for connection options.
