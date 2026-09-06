@@ -1,6 +1,5 @@
 from pathlib import Path
 
-import dj_database_url
 from decouple import Csv, config
 
 
@@ -79,10 +78,11 @@ WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
 DATABASES = {
-    "default": dj_database_url.config(
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
-        conn_max_age=600,
-    ),
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": config("SQLITE_DB_PATH", default=str(BASE_DIR / "db.sqlite3")),
+        "OPTIONS": {"timeout": 20},
+    },
 }
 
 AUTH_PASSWORD_VALIDATORS = [

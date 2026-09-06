@@ -10,7 +10,7 @@ A lightweight, production-minded Django REST Framework API for managing and serv
 - django-filter
 - Pillow
 - python-decouple
-- SQLite for local development
+- SQLite for local development and production
 
 ## Setup
 
@@ -114,7 +114,7 @@ The app reads configuration with `python-decouple`.
 | `SECRET_KEY` | `django-insecure-change-me` | Required |
 | `DEBUG` | `True` | `True` for local development |
 | `ALLOWED_HOSTS` | `localhost,127.0.0.1` | Comma-separated host list |
-| `DATABASE_URL` | `sqlite:///db.sqlite3` | Use PostgreSQL in production |
+| `SQLITE_DB_PATH` | `/var/data/db.sqlite3` | Optional; defaults to project `db.sqlite3` |
 | `CORS_ALLOWED_ORIGINS` | `http://localhost:5173` | Comma-separated frontend origins |
 | `CSRF_TRUSTED_ORIGINS` | `http://localhost:5173` | Needed for trusted frontend domains |
 
@@ -126,17 +126,19 @@ Production entrypoints:
 
 ```bash
 ./build.sh
-gunicorn config.wsgi:application
+bash start.sh
 ```
 
 Recommended production variables:
 
 ```bash
 DJANGO_SETTINGS_MODULE=config.settings.prod
-DATABASE_URL=postgresql://...
+SQLITE_DB_PATH=/var/data/db.sqlite3
 ALLOWED_HOSTS=your-backend-domain.onrender.com
 CORS_ALLOWED_ORIGINS=https://your-frontend-domain.vercel.app
 CSRF_TRUSTED_ORIGINS=https://your-frontend-domain.vercel.app
 ```
 
 See [`DEPLOYMENT.md`](../DEPLOYMENT.md) for the full frontend + backend flow.
+
+SQLite data on Render must live on a persistent disk to survive restarts and redeploys. The blueprint describes a new disk at `/var/data`, with media in `/var/data/media`. Do not apply this disk change to an existing service before backing up and copying its current database and uploads. The start script applies migrations at runtime because persistent disks are unavailable during builds. Existing data is not copied automatically.

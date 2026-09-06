@@ -17,7 +17,6 @@ def populate_skillcategory_profiles(apps, schema_editor):
             location="",
             github_url="",
             linkedin_url="",
-            twitter_url="",
         )
 
     SkillCategory.objects.filter(profile__isnull=True).update(profile=profile)

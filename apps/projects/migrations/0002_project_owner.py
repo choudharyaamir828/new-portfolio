@@ -17,7 +17,6 @@ def populate_project_owners(apps, schema_editor):
             location="",
             github_url="",
             linkedin_url="",
-            twitter_url="",
         )
 
     Project.objects.filter(owner__isnull=True).update(owner=profile)

@@ -3,11 +3,11 @@ services:
     name: portfolio-backend
     env: python
     buildCommand: ./build.sh
-    startCommand: gunicorn config.wsgi:application --workers 2 --threads 4 --timeout 60
+    startCommand: bash start.sh
     healthCheckPath: /api/v1/health/
     disk:
-      name: portfolio-media
-      mountPath: /opt/render/project/src/media
+      name: portfolio-data
+      mountPath: /var/data
       sizeGB: 1
     envVars:
       - key: PYTHON_VERSION
@@ -15,20 +15,14 @@ services:
       - key: DJANGO_SETTINGS_MODULE
         value: config.settings.prod
       - key: MEDIA_ROOT
-        value: /opt/render/project/src/media
+        value: /var/data/media
       - key: SECRET_KEY
         generateValue: true
-      - key: DATABASE_URL
-        fromDatabase:
-          name: portfolio-db
-          property: connectionString
+      - key: SQLITE_DB_PATH
+        value: /var/data/db.sqlite3
       - key: ALLOWED_HOSTS
         value: portfolio-backend.onrender.com
       - key: CORS_ALLOWED_ORIGINS
         value: https://your-frontend-domain.vercel.app
       - key: CSRF_TRUSTED_ORIGINS
         value: https://your-frontend-domain.vercel.app
-databases:
-  - name: portfolio-db
-    databaseName: portfolio_db
-    user: portfolio_db_user
